@@ -143,16 +143,24 @@ end)
 --- but you can integrate the below state bag to your death resources.
 --- LocalPlayer.state:set('isDead', true or false, false)
 function isDead()
-	if LocalPlayer.state.isDead then
-		return true
-	elseif IsPlayerDead(PlayerId()) then
-		return true
-	end
+	local isDead = exports["isPed"]:isPed("dead")
+	return isDead or IsPlayerDead(PlayerPedId()) and false
 end
 
 RegisterCommand('+radiotalk', function()
 	if GetConvarInt('voice_enableRadios', 1) ~= 1 then return end
 	if isDead() then return end
+
+	-- Ensure player has an radio to use radio
+	if not exports["plrp-inventory"]:hasEnoughOfItem("radio", 1, false) then
+		TriggerEvent("radio:reset")
+		return
+	end
+
+	if exports['police']:getIsCuffed() == true then
+		TriggerEvent('DoLongHudText','You cannot do this while handcuffed!',2)
+		return
+	end
 
 	if not radioPressed and radioEnabled then
 		if radioChannel > 0 then
@@ -170,6 +178,7 @@ RegisterCommand('+radiotalk', function()
 			end
 			CreateThread(function()
 				TriggerEvent("pma-voice:radioActive", true)
+				TriggerEvent("hud:voice:transmitting", true)
 				while radioPressed do
 					Wait(0)
 					SetControlNormal(0, 249, 1.0)
@@ -192,6 +201,7 @@ RegisterCommand('-radiotalk', function()
 			StopAnimTask(PlayerPedId(), "random@arrests", "generic_radio_enter", -4.0)
 		end
 		TriggerServerEvent('pma-voice:setTalkingOnRadio', false)
+		TriggerEvent("hud:voice:transmitting", false)
 	end
 end, false)
 if gameVersion == 'fivem' then

@@ -161,10 +161,17 @@ end
 ---@param clickType boolean whether to play the 'on' or 'off' click. 
 function playMicClicks(clickType)
 	if micClicks ~= 'true' then return logger.verbose("Not playing mic clicks because client has them disabled") end
-	sendUIMessage({
-		sound = (clickType and "audio_on" or "audio_off"),
-		volume = (clickType and volumes["radio"] or 0.05)
-	})
+
+	if clickType == true then
+		TriggerEvent("InteractSound_CL:PlayOnOne", "radioon", 0.2)
+	else
+		TriggerEvent("InteractSound_CL:PlayOnOne", "radiooff", 0.2)
+	end
+
+	--sendUIMessage({
+	--	sound = (clickType and "audio_on" or "audio_off"),
+	--	volume = (clickType and volumes["radio"] or 0.05)
+	--})
 end
 
 --- toggles the targeted player muted
