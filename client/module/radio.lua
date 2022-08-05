@@ -178,7 +178,7 @@ RegisterCommand('+radiotalk', function()
 			end
 			CreateThread(function()
 				TriggerEvent("pma-voice:radioActive", true)
-				TriggerEvent("hud:voice:transmitting", true)
+				TriggerEvent("plrp-hud:transmitting", true)
 				while radioPressed do
 					Wait(0)
 					SetControlNormal(0, 249, 1.0)
@@ -201,7 +201,7 @@ RegisterCommand('-radiotalk', function()
 			StopAnimTask(PlayerPedId(), "random@arrests", "generic_radio_enter", -4.0)
 		end
 		TriggerServerEvent('pma-voice:setTalkingOnRadio', false)
-		TriggerEvent("hud:voice:transmitting", false)
+		TriggerEvent("plrp-hud:transmitting", false)
 	end
 end, false)
 if gameVersion == 'fivem' then
