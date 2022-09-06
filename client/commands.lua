@@ -54,13 +54,37 @@ exports("clearProximityOverride", function()
 	end
 end)
 
+-- Megaphone Stuff
+Citizen.CreateThread(function()
+	table.insert(Cfg.voiceModes, {60.0, "Megaphone"})
+end)
+
+exports("setMegaphone", function(bool, value)
+	if bool then
+		mode = #Cfg.voiceModes
+		setProximityState(Cfg.voiceModes[#Cfg.voiceModes][1], true)
+		TriggerEvent('pma-voice:setTalkingMode', #Cfg.voiceModes)
+		TriggerEvent('plrp-hud:setVoiceRange', mode)
+	else
+		mode = value
+		setProximityState(Cfg.voiceModes[value][1], false)
+		TriggerEvent('pma-voice:setTalkingMode', value)
+		TriggerEvent('plrp-hud:setVoiceRange', mode)
+	end
+end)
+
+exports("getMegaphone", function()
+	return mode
+end)
+--end Megaphone Stuff
+
 RegisterCommand('cycleproximity', function()
 	-- Proximity is either disabled, or manually overwritten.
 	if GetConvarInt('voice_enableProximityCycle', 1) ~= 1 or disableProximityCycle then return end
 	local newMode = mode + 1
 
 	-- If we're within the range of our voice modes, allow the increase, otherwise reset to the first state
-	if newMode <= #Cfg.voiceModes then
+	if newMode <= #Cfg.voiceModes and newMode <= 3 then
 		mode = newMode
 	else
 		mode = 1
