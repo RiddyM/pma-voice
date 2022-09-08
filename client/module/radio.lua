@@ -149,7 +149,7 @@ end
 
 RegisterCommand('+radiotalk', function()
 	if GetConvarInt('voice_enableRadios', 1) ~= 1 then return end
-	if isDead() then return end
+	if isDead() or LocalPlayer.state.disableRadio then return end
 
 	-- Ensure player has an radio to use radio
 	if not exports["plrp-inventory"]:hasEnoughOfItem("radio", 1, false) then
@@ -179,7 +179,7 @@ RegisterCommand('+radiotalk', function()
 			CreateThread(function()
 				TriggerEvent("pma-voice:radioActive", true)
 				TriggerEvent("plrp-hud:transmitting", true)
-				while radioPressed do
+				while radioPressed and not LocalPlayer.state.disableRadio do
 					Wait(0)
 					SetControlNormal(0, 249, 1.0)
 					SetControlNormal(1, 249, 1.0)
@@ -191,7 +191,7 @@ RegisterCommand('+radiotalk', function()
 end, false)
 
 RegisterCommand('-radiotalk', function()
-	if radioChannel > 0 or radioEnabled and radioPressed then
+	if (radioChannel > 0 or radioEnabled) and radioPressed then
 		radioPressed = false
 		MumbleClearVoiceTargetPlayers(voiceTarget)
 		playerTargets(MumbleIsPlayerTalking(PlayerId()) and callData or {})

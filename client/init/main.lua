@@ -24,15 +24,16 @@ function setVolume(volume, volumeType)
 		if volumeTbl then
 			LocalPlayer.state:set(volumeType, volume, true)
 			volumes[volumeType] = volume
+			resyncVolume(volumeType, volume)
 		else
 			error(('setVolume got a invalid volume type %s'):format(volumeType))
 		end
 	else
-		-- _ is here to not mess with global 'type' function
-		for _type, vol in pairs(volumes) do
-			volumes[_type] = volume
-			LocalPlayer.state:set(_type, volume, true)
+		for volumeType, _ in pairs(volumes) do
+			volumes[volumeType] = volume
+			LocalPlayer.state:set(volumeType, volume, true)
 		end
+		resyncVolume("all", volume)
 	end
 end
 
@@ -62,14 +63,31 @@ end)
 if gameVersion == 'fivem' then
 	radioEffectId = CreateAudioSubmix('Radio')
 	SetAudioSubmixEffectRadioFx(radioEffectId, 0)
-	SetAudioSubmixEffectParamInt(radioEffectId, 0, 'default', 1)
+	-- This is a GetHashKey on purpose, backticks break treesitter in nvim :|
+	SetAudioSubmixEffectParamInt(radioEffectId, 0, GetHashKey('default'), 1)
+	SetAudioSubmixOutputVolumes(
+		radioEffectId,
+		0,
+		1.0 --[[ frontLeftVolume ]],
+		0.25 --[[ frontRightVolume ]],
+		0.0 --[[ rearLeftVolume ]],
+		0.0 --[[ rearRightVolume ]],
+		1.0 --[[ channel5Volume ]],
+		1.0 --[[ channel6Volume ]]
+	)
 	AddAudioSubmixOutput(radioEffectId, 0)
 
 	callEffectId = CreateAudioSubmix('Call')
-	SetAudioSubmixEffectRadioFx(callEffectId, 1)
-	SetAudioSubmixEffectParamInt(callEffectId, 1, 'default', 1)
-	SetAudioSubmixEffectParamFloat(callEffectId, 1, 'freq_low', 300.0)
-	SetAudioSubmixEffectParamFloat(callEffectId, 1, 'freq_hi', 6000.0)
+	SetAudioSubmixOutputVolumes(
+		callEffectId,
+		1,
+		0.10 --[[ frontLeftVolume ]],
+		0.50 --[[ frontRightVolume ]],
+		0.0 --[[ rearLeftVolume ]],
+		0.0 --[[ rearRightVolume ]],
+		1.0 --[[ channel5Volume ]],
+		1.0 --[[ channel6Volume ]]
+	)
 	AddAudioSubmixOutput(callEffectId, 1)
 end
 
@@ -104,7 +122,8 @@ local disableSubmixReset = {}
 function toggleVoice(plySource, enabled, moduleType)
 	if mutedPlayers[plySource] then return end
 	logger.verbose('[main] Updating %s to talking: %s with submix %s', plySource, enabled, moduleType)
-	if enabled then
+	local distance = currentTargets[plySource]
+	if enabled and (not distance or distance > 4.0) then
 		MumbleSetVolumeOverrideByServerId(plySource, enabled and volumes[moduleType])
 		if GetConvarInt('voice_enableSubmix', 1) == 1 and gameVersion == 'fivem' then
 			if moduleType then
@@ -114,7 +133,7 @@ function toggleVoice(plySource, enabled, moduleType)
 				MumbleSetSubmixForServerId(plySource, -1)
 			end
 		end
-	else
+	elseif not enabled then
 		if GetConvarInt('voice_enableSubmix', 1) == 1 and gameVersion == 'fivem' then
 			-- garbage collect it
 			disableSubmixReset[plySource] = nil
@@ -125,6 +144,27 @@ function toggleVoice(plySource, enabled, moduleType)
 			end)
 		end
 		MumbleSetVolumeOverrideByServerId(plySource, -1.0)
+	end
+end
+
+local function updateVolumes(voiceTable, override)
+	for serverId, talking in pairs(voiceTable) do
+		if not talking or serverId == playerServerId then goto skip_iter end
+		MumbleSetVolumeOverrideByServerId(serverId, override)
+		::skip_iter::
+	end
+end
+
+--- resyncs the call/radio/etc volume to the new volume
+---@param volumeType any
+function resyncVolume(volumeType, newVolume)
+	if volumeType == "all" then
+		resyncVolume("radio", newVolume)
+		resyncVolume("call", newVolume)
+	elseif volumeType == "radio" then
+		updateVolumes(radioData, newVolume)
+	elseif volumeType == "call" then
+		updateVolumes(callData, newVolume)
 	end
 end
 
@@ -161,6 +201,11 @@ end
 ---@param clickType boolean whether to play the 'on' or 'off' click. 
 function playMicClicks(clickType)
 	if micClicks ~= 'true' then return logger.verbose("Not playing mic clicks because client has them disabled") end
+	-- TODO: Add customizable radio click volumes
+	--sendUIMessage({
+	--	sound = (clickType and "audio_on" or "audio_off"),
+	--	volume = (clickType and 0.1 or 0.03)
+	--})
 
 	if clickType == true then
 		TriggerEvent("InteractSound_CL:PlayOnOne", "radioon", 0.2)
@@ -173,6 +218,11 @@ function playMicClicks(clickType)
 	--	volume = (clickType and volumes["radio"] or 0.05)
 	--})
 end
+
+--- getter for mutedPlayers
+exports('getMutedPlayers', function()
+	return mutedPlayers
+end)
 
 --- toggles the targeted player muted
 ---@param source number the player to mute
