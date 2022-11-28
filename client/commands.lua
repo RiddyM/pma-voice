@@ -54,30 +54,6 @@ exports("clearProximityOverride", function()
 	end
 end)
 
--- Megaphone Stuff
-Citizen.CreateThread(function()
-	table.insert(Cfg.voiceModes, {60.0, "Megaphone"})
-end)
-
-exports("setMegaphone", function(bool, value)
-	if bool then
-		mode = #Cfg.voiceModes
-		setProximityState(Cfg.voiceModes[#Cfg.voiceModes][1], true)
-		TriggerEvent('pma-voice:setTalkingMode', #Cfg.voiceModes)
-		TriggerEvent('plrp-hud:setVoiceRange', mode)
-	else
-		mode = value
-		setProximityState(Cfg.voiceModes[value][1], false)
-		TriggerEvent('pma-voice:setTalkingMode', value)
-		TriggerEvent('plrp-hud:setVoiceRange', mode)
-	end
-end)
-
-exports("getMegaphone", function()
-	return mode
-end)
---end Megaphone Stuff
-
 RegisterCommand('cycleproximity', function()
 	-- Proximity is either disabled, or manually overwritten.
 	if GetConvarInt('voice_enableProximityCycle', 1) ~= 1 or disableProximityCycle then return end
@@ -94,6 +70,11 @@ RegisterCommand('cycleproximity', function()
 	TriggerEvent('pma-voice:setTalkingMode', mode)
 	TriggerEvent('plrp-hud:setVoiceRange', mode)
 end, false)
+
+exports("getVoiceMode", function()
+	return mode
+end)
+
 if gameVersion == 'fivem' then
 	RegisterKeyMapping('cycleproximity', 'Cycle Proximity', 'keyboard', GetConvar('voice_defaultCycle', 'F11'))
 end
