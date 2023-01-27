@@ -34,7 +34,10 @@ RegisterNetEvent('pma-voice:syncRadioData', syncRadioData)
 ---@param plySource number the players server id.
 ---@param enabled boolean whether the player is talking or not.
 function setTalkingOnRadio(plySource, enabled)
-	toggleVoice(plySource, enabled, 'radio')
+    -- If we're on a call we don't want to toggle their voice disabled this will break calls.
+    if not callData[plySource] then
+        toggleVoice(plySource, enabled, 'radio')
+    end
 	radioData[plySource] = enabled
 	playMicClicks(enabled)
 end
@@ -76,7 +79,7 @@ function removePlayerFromRadio(plySource)
 		radioData = {}
 		playerTargets(MumbleIsPlayerTalking(PlayerId()) and callData or {})
 	else
-		toggleVoice(plySource, false)
+		toggleVoice(plySource, false , 'radio')
 		if radioPressed then
 			logger.info('[radio] %s left radio %s while we were talking, updating targets.', plySource, radioChannel)
 			playerTargets(radioData, MumbleIsPlayerTalking(PlayerId()) and callData or {})
@@ -103,7 +106,6 @@ end
 
 --- exports setRadioChannel
 --- sets the local players current radio channel and updates the server
----@param channel number the channel to set the player to, or 0 to remove them.
 exports('setRadioChannel', setRadioChannel)
 -- mumble-voip compatability
 exports('SetRadioChannel', setRadioChannel)
@@ -174,7 +176,7 @@ RegisterCommand('+radiotalk', function()
 				while not HasAnimDictLoaded('random@arrests') do
 					Wait(10)
 				end
-				TaskPlayAnim(PlayerPedId(), "random@arrests", "generic_radio_enter", 8.0, 2.0, -1, 50, 2.0, 0, 0, 0)
+				TaskPlayAnim(PlayerPedId(), "random@arrests", "generic_radio_enter", 8.0, 2.0, -1, 50, 2.0, false, false, false)
 			end
 			CreateThread(function()
 				TriggerEvent("pma-voice:radioActive", true)

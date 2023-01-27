@@ -17,6 +17,7 @@ client_scripts {
 	'client/init/proximity.lua',
 	'client/init/init.lua',
 	'client/init/main.lua',
+	'client/init/submix.lua',
 	'client/module/*.lua',
     'client/*.lua',
 }
@@ -57,7 +58,7 @@ convar_category 'PMA-Voice' {
 	{ "Enable calls", "$voice_enableCalls", "CV_INT", "1" },
 	{ "Enable submix", "$voice_enableSubmix", "CV_INT", "1" },
         { "Enable radio animation", "$voice_enableRadioAnim", "CV_INT", "0" },
-	{ "Radio key", "$voice_defaultRadio", "CV_STRING", "LALT" },
+	{ "Radio key", "$voice_defaultRadio", "CV_STRING", "LMENU" },
 	{ "UI refresh rate", "$voice_uiRefreshRate", "CV_INT", "200" },
 	{ "Allow players to set audio intent", "$voice_allowSetIntent", "CV_INT", "1" },
 	{ "External mumble server address", "$voice_externalAddress", "CV_STRING", "" },
