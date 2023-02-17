@@ -159,7 +159,7 @@ RegisterCommand('+radiotalk', function()
 		return
 	end
 
-	if exports['police']:getIsCuffed() == true or exports['ziptie']:isZipped() then
+	if exports['police']:getIsCuffed() == true or exports['ziptie']:isZipped() == true then
 		TriggerEvent('DoLongHudText','You cannot do this while handcuffed!',2)
 		return
 	end
